@@ -22,29 +22,32 @@ int parse_and_run(char *filename, VanEmdeBoas *vEB){
         
         // INC <valor>
         if (strncmp(line, "INC", 3) == 0){
-            int value = atoi(line + 4);
+            uint32_t value = (uint32_t)strtoul(line + 4, NULL, 10);
             veb_insert(vEB, value);
 
         // REM <valor>
         } else if (strncmp(line, "REM", 3) == 0){
-            int value = atoi(line + 4);
+            uint32_t value = (uint32_t)strtoul(line + 4, NULL, 10);
             veb_remove(vEB, value);
 
         // SUC <valor>
         } else if (strncmp(line, "SUC", 3) == 0){
-            int value = atoi(line+4), inf = 0;
-            // Impressão do nome da operação
-            printf("SUC %d\n", value);
+            uint32_t value = (uint32_t)strtoul(line + 4, NULL, 10);
+            int inf = 0;
             uint32_t succ = veb_successor(vEB, value, &inf);
-            printf("%u\n", succ);
+            
+            if (inf) printf("SUC %u\n+INF\n", value);
+            else printf("SUC %u\n%u\n", value, succ);
+                
         
         // PRE <valor>
         } else if (strncmp(line, "PRE", 3) == 0){
-            int value = atoi(line+4), inf = 0;
-            // Impressão do nome da operação
-            printf("PRE %d\n", value);
+            uint32_t value = (uint32_t)strtoul(line + 4, NULL, 10);
+            int inf = 0;
             uint32_t pred = veb_predecessor(vEB, value, &inf);
-            printf("%u\n", pred);
+            
+            if (inf) printf("PRE %u\n-INF\n", value);
+            else printf("PRE %u\n%u\n", value, pred);
 
         // IMP <versão>
         } else if (strncmp(line, "IMP", 3) == 0) {

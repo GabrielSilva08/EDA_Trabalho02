@@ -5,7 +5,6 @@
 
 // Macros auxiliares necessárias para a decomposição de uma chave em coordenadas hierárquicas, x = <c, i>.
 #define VEB_HIGH(x, w) ((x) >> ((w) >> 1)) // c = x >> w/2
-// #define VEB_LOW(x, w) ((x) - (VEB_HIGH(x, w) << ((w) / 2)))
 #define VEB_LOW(x, w) ((x) & ((1 << ((w) >> 1)) - 1)) // i = x & ((1 << w/2) - 1)
 #define VEB_INDEX(c, i, w) (((c) << ((w) >> 1)) | (i)) // x = (c << w/2) | i
 
@@ -52,7 +51,6 @@ void veb_insert(VanEmdeBoas *vEB, uint32_t x) {
         return;
     }
 
-    // Caso elemento repetido
     if (x == vEB->min || x == vEB->max) return;
 
     // Instanciação do resumo
@@ -71,7 +69,6 @@ void veb_insert(VanEmdeBoas *vEB, uint32_t x) {
 
     uint32_t c = VEB_HIGH(x, vEB->w);
     uint32_t i = VEB_LOW(x, vEB->w);
-
     VanEmdeBoas *child = eh_insert(vEB->clusters, c);
     veb_insert(child, i); // vEB[c] = i
 
@@ -265,7 +262,7 @@ void veb_print(VanEmdeBoas *vEB){
     // Para cluster não-vazio...
     for(uint32_t i = 0; i < vEB->clusters->hash_size; i++){
         // Para cada entrada...
-        for(uint32_t j = 0; j < vEB->clusters->buckets[i].size; i++){
+        for(uint32_t j = 0; j < vEB->clusters->buckets[i].size; j++){
             uint32_t c = vEB->clusters->buckets[i].entries[j].c;
             VanEmdeBoas *cluster = vEB->clusters->buckets[i].entries[j].vEB;
 
