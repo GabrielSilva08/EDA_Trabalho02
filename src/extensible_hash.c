@@ -16,6 +16,9 @@
  * Params:
  *  hash (ExtensibleHash*): Tabela de dispersão a qual se deseja computar a função de dispersão;
  *  key (uint32_t): Chave a qual se deseja aplicar a função de dispersão.
+ * 
+ * Returns:
+ *  (uint32_t): Hashing aplicado em key
  */
 static uint32_t hash_function(ExtensibleHash *hash, uint32_t key);
 
@@ -25,6 +28,9 @@ static uint32_t hash_function(ExtensibleHash *hash, uint32_t key);
  * Params:
  *  bucket (Bucket*): Bucket a qual se deseja realizar a busca sobre;
  *  key (uint32_t): Valor de busca interesado.
+ * 
+ * Returns:
+ *  (int): Índice interno do bucket ou -1
  */
 static int bucket_find_index(Bucket *bucket, uint32_t key);
 
@@ -77,8 +83,8 @@ void eh_destroy(ExtensibleHash *hash);
 
 static uint32_t hash_function(ExtensibleHash *hash, uint32_t key){
     //hash_size é sempre uma potência de 2, logo, podemos fazer uso de manipulação bit a bit.
-    // return (key & (hash->hash_size-1));
-    return key % hash->hash_size;
+    //return key % hash->hash_size;
+    return (key & (hash->hash_size-1));
 }
 
 static int bucket_find_index(Bucket *bucket, uint32_t key){

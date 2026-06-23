@@ -57,6 +57,9 @@ typedef struct {
  *
  * Params:
  *  w (uint8_t): Bits de máquina necessário para inicializar as entrandas vEB.
+ * 
+ * Returns:
+ *  (ExtensibleHash*): Hash extensível inicializado
 */
 ExtensibleHash *eh_create(uint8_t w);
 
@@ -66,16 +69,22 @@ ExtensibleHash *eh_create(uint8_t w);
  * Params:
  *  hash (ExtensibleHash*): Tabela de dispersão a qual se deseja fazer uma busca pela chave.
  *  key (uint32_t): Chave de pesquisa a qual se desejar encontrar.
+ * 
+ * Returns:
+ *  (VanEmdeBoas*): Estrutura buscada ou NULL
  */
 struct VanEmdeBoas *eh_search(ExtensibleHash *hash, uint32_t key);
 
 /*
- * Inseri uma nova estrutura vEB associada ao valor key (cluster) e retorna o ponteiro associado.
+ * Insere uma nova estrutura vEB associada ao valor key (cluster) e retorna o ponteiro associado.
  * Se uma estrutura com a respectiva chave já existir, é retornado diretamente o endereço, sem necessidade de fazer uma nova inclusão.
  * 
  * Params:
  *  hash (ExtensibleHash*): Tabela de dispersão a qual se deseja realizar a nova inserção;
  *  key (uint32_t): Chave associada a estrutura inserida.
+ * 
+ * Returns:
+ *  (VanEmdeBoas*): Estrutura vEB inserida
  */
 struct VanEmdeBoas *eh_insert(ExtensibleHash *hash, uint32_t key);
 
