@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "parser.h"
+#include "van_emde_boas.h"
 
 // Tamanho máximo de uma linha no arquivo de entrada
 #define MAX_LINE 256
  
-int parse_and_run(char *filename, PPersistentBST *tree){
+int parse_and_run(char *filename, VanEmdeBoas *vEB){
     char line[MAX_LINE];
     FILE *fp = fopen(filename, "r");
  
@@ -22,26 +23,34 @@ int parse_and_run(char *filename, PPersistentBST *tree){
         // INC <valor>
         if (strncmp(line, "INC", 3) == 0){
             int value = atoi(line + 4);
-            ppbst_insert(tree, value);
+            veb_insert(vEB, value);
 
         // REM <valor>
         } else if (strncmp(line, "REM", 3) == 0){
             int value = atoi(line + 4);
-            ppbst_remove(tree, value);
+            veb_remove(vEB, value);
 
-        // SUC <valor> <versão>
+        // SUC <valor>
         } else if (strncmp(line, "SUC", 3) == 0){
-            int value, version;
-            sscanf(line+4, "%d %d", &value, &version);
+            int value = atoi(line+4), inf = 0;
             // Impressão do nome da operação
-            printf("SUC %d %d\n", value, version);
-            ppbst_successor(tree, value, version);
+            printf("SUC %d\n", value);
+            uint32_t succ = veb_successor(vEB, value, &inf);
+            printf("%u\n", succ);
+        
+        // PRE <valor>
+        } else if (strncmp(line, "PRE", 3) == 0){
+            int value = atoi(line+4), inf = 0;
+            // Impressão do nome da operação
+            printf("PRE %d\n", value);
+            uint32_t pred = veb_predecessor(vEB, value, &inf);
+            printf("%u\n", pred);
 
         // IMP <versão>
         } else if (strncmp(line, "IMP", 3) == 0) {
-            int version = atoi(line + 4);
-            printf("IMP %d\n", version);
-            ppbst_print_inorder(tree, version);
+            printf("IMP\n");
+            veb_print(vEB);
+            printf("\n");
         }
         // Operações não reconhecidas são ignoradas
     }
