@@ -6,7 +6,7 @@
 
 /*
  * Estrutura van Emde Boas. O universo de chaves (cujo tamanho é representado por w bits) é dividido em sqrt(u) clusters de tamanho sqrt(u).
- * A profundidade da recursão, que o principal fator de complexidade dos métodos implementados, é O(log log u), ou O(log w).
+ * A profundidade da recursão, que é o principal fator de complexidade dos métodos implementados, é O(log log u), ou O(log w).
  *
  * Params:
  *  w (uint8_t): Número de bits utilizados na representação dos elementos;
@@ -75,7 +75,7 @@ void veb_remove(VanEmdeBoas *vEB, uint32_t x);
  * Returns:
  *  (uint32_t): Sucessor de x se esse estiver presente na estrutura.
  */
-uint32_t veb_successor  (VanEmdeBoas *vEB, uint32_t x, int* is_infinity);
+uint32_t veb_successor(VanEmdeBoas *vEB, uint32_t x, int* is_infinity);
 
 /*
  * Retorna o maior elemento menor que o valor de chave x passado. Caso esse elemento não exista na estrutura, o campo is_infinity sinaliza que o retorno é -INF.

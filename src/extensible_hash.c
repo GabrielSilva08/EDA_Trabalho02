@@ -83,7 +83,7 @@ void eh_destroy(ExtensibleHash *hash);
 
 static uint32_t hash_function(ExtensibleHash *hash, uint32_t key){
     //hash_size é sempre uma potência de 2, logo, podemos fazer uso de manipulação bit a bit.
-    //return key % hash->hash_size;
+    // return key % hash->hash_size;
     return (key & (hash->hash_size-1));
 }
 
