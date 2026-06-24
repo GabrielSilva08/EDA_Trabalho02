@@ -223,17 +223,21 @@ uint32_t veb_predecessor(VanEmdeBoas *vEB, uint32_t x, int* is_infinity) {
  * Params:
  *  vEB (VanEmdeBoas*): Estrutura vEB na qual o cluster alvo pertence;
  *  offset (uint32_t): Deslocamento necessário para impressão dos valores originais de chave;
+ *  root_w (uint8_t): Número de bits original da estrutura. Necessário para reconstrução das chaves;
  *  first (int*): Flag indicativa se o cluster alvo é o primeiro a ser impreso depois da impressão de "min".
  */
-static void print_values_recursive(VanEmdeBoas *vEB, uint32_t offset, int *first){
+static void print_values_recursive(VanEmdeBoas *vEB, uint32_t offset, uint8_t root_w, int *first){
     if (vEB->is_empty) return;
+
 
     // Impressão do min deste nível recomposto diretamente com o offset
     if(!*first) printf(", ");
+
     /* Maneira como deseja que a impressão dos valores seja feita: */
 
-    //printf("%u", offset + vEB->min); // <- Impressão do valor original reconstruído
-    printf("%u", vEB->min);            // <- Impressão da metade de bits inferior    
+    //printf("%u", offset + vEB->min);                                      // <- Impressão do valor original reconstruído
+    //printf("%u", vEB->min);                                               // <- Impressão da metade de bits inferior
+    printf("%u", VEB_LOW(offset + vEB->min, root_w));                       // <- Impressão do 1º Nível de recursão do cluster    
     
     *first = 0;
 
@@ -246,7 +250,7 @@ static void print_values_recursive(VanEmdeBoas *vEB, uint32_t offset, int *first
             VanEmdeBoas *child_cluster = vEB->clusters->buckets[i].entries[j].vEB;
 
             uint32_t child_offset = offset + ((child_c) << ((vEB->w) >> 1));
-            print_values_recursive(child_cluster, child_offset, first);
+            print_values_recursive(child_cluster, child_offset, root_w, first);   
         }
     }
 }
@@ -257,9 +261,9 @@ void veb_print(VanEmdeBoas *vEB){
     printf("Min: %u", vEB->min);
 
     // Só tem 1 elemento?
-    if (vEB->min == vEB->max) return;
+    if (vEB->min == vEB->max) return; 
 
-    // Para cluster não-vazio...
+    // Para cada cluster não-vazio...
     for(uint32_t i = 0; i < vEB->clusters->hash_size; i++){
         // Para cada entrada...
         for(uint32_t j = 0; j < vEB->clusters->buckets[i].size; j++){
@@ -270,8 +274,8 @@ void veb_print(VanEmdeBoas *vEB){
 
             uint32_t offset = c << ((vEB->w) >> 1);
             int first = 1;
-            // Impressão dos presentes no cluster c
-            print_values_recursive(cluster, offset, &first);
+            // Impressão dos valores presentes no cluster c
+            print_values_recursive(cluster, offset, vEB->w, &first);
         }
     }
 }
