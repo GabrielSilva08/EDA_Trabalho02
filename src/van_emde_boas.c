@@ -223,10 +223,10 @@ uint32_t veb_predecessor(VanEmdeBoas *vEB, uint32_t x, int* is_infinity) {
  * Params:
  *  vEB (VanEmdeBoas*): Estrutura vEB na qual o cluster alvo pertence;
  *  offset (uint32_t): Deslocamento necessário para impressão dos valores originais de chave;
- *  root_w (uint8_t): Número de bits original da estrutura. Necessário para reconstrução das chaves;
+ *  w_root (uint8_t): Número de bits original da estrutura. Necessário para recuperação dos índices i das chaves x = <c,i>;
  *  first (int*): Flag indicativa se o cluster alvo é o primeiro a ser impreso depois da impressão de "min".
  */
-static void print_values_recursive(VanEmdeBoas *vEB, uint32_t offset, uint8_t root_w, int *first){
+static void print_values_recursive(VanEmdeBoas *vEB, uint32_t offset, uint8_t w_root, int *first){
     if (vEB->is_empty) return;
 
 
@@ -237,7 +237,7 @@ static void print_values_recursive(VanEmdeBoas *vEB, uint32_t offset, uint8_t ro
 
     //printf("%u", offset + vEB->min);                                      // <- Impressão do valor original reconstruído
     //printf("%u", vEB->min);                                               // <- Impressão da metade de bits inferior
-    printf("%u", VEB_LOW(offset + vEB->min, root_w));                       // <- Impressão do 1º Nível de recursão do cluster    
+    printf("%u", VEB_LOW(offset + vEB->min, w_root));                       // <- Impressão do 1º Nível de recursão do cluster    
     
     *first = 0;
 

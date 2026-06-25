@@ -150,28 +150,78 @@ Funções disponíveis ao usuário do módulo:
 
 Funções auxiliares (`static`, não são expostas no header!) criadas com o intuito de simplificar os algoritmos principais e propiciar maior facilidade de manuntenção do projeto:
 
-| Função                    | Arquivo             | Descrição                                                                                                                          |
-|---------------------------|---------------------|------------------------------------------------------------------------------------------------------------------------------------|
-| `print_values_recursive`  | `van_emde_boas.c`   | Função auxiliar na impressão da estrutura, se faz necessária para imprimir a estrutura recursiva dos clusters presentes na árvore. |
+| Função                    | Assinatura                                                                                          | Arquivo             | Descrição                                                                                                                          |
+|---------------------------|-----------------------------------------------------------------------------------------------------|---------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| `print_values_recursive`  | `static void print_values_recursive(VanEmdeBoas *vEB, uint32_t offset, uint8_t w_root, int *first)` | `van_emde_boas.c`   | Função auxiliar na impressão da estrutura, se faz necessária para imprimir a estrutura recursiva dos clusters presentes na árvore. |
 
 ---
 
 ### Módulo `extensible_hash.h`
 
-Módulo responsável pela criação, manuntenção e limpeza de uma tabela de dispersão extensível, ou seja, com tamanho dinâmico através das operações de doubling e halving...
+Módulo responsável pela criação, manuntenção e limpeza de uma tabela de dispersão extensível, ou seja, com tamanho dinâmico através das operações de doubling e halving, cujos os parâmetros de redimensionamento (`MAX_LOAD` e `MIN_LOAD`) podem ser alterados posteriormente. A estrutura foi implementada em um nível de granularidade superior para garantir o melhor gerenciamento possível de memória utilizada pela classe. A função de dispersão calcula com base no tamanho atual da tabela (`x mod m`), a escolha dessa função se dá pelo objetivo de termos uma maior simplicidade no processo. Pelo mesmo motivo apresentado anteriormente, o tratamento de colisões é feito por meio do **encadeamento** das entradas em uma lista dinâmica, a qual vai tendo seu tamanho dobrado a medida que suas entradas ficam cheias.
 
 #### `HashEntry`
 
-[...]
+Registro representativo das entradas da tabela hash propriamente dito. Tem por finalidade representar o par `<chave, vEB>` dentro de um bucket, a qual esse pode possuir 1 ou mais entradas.
+
+```c
+typedef struct {
+    uint32_t c;              // Representa o índice de cluster (bits superiores) dado a decomposição da chave em coordenadas hierárquicas key = <c, i>;
+    struct VanEmdeBoas *vEB; // Estrutura (subárvore) van Emde Boas associada à entrada.
+} HashEntry;
+```
 
 #### `Bucket`
 
-[...]
+Lista encadeada linear (array dinâmico) de entradas. Valores de chave com um mesmo hashing pertecem a um mesmo bucket. Sua implementação se deve à forma como o tratamento de colisões foi escolhido.
+
+```c
+typedef struct {
+    HashEntry *entries; // Elementos de entrada na estrutura. Adaptado para receber estruturas van Emde Boas;
+    uint32_t size;      // Quantidade de elementos no bucket;
+    uint32_t capacity;  // Capacidade máxima alocada ao bucket.  
+} Bucket;
+```
 
 #### `ExtensibleHash`
 
-[...]
+Tabela de dispersão (hash) extensível com doubling e halving. A função de dispersão adotada é simplesmente (key % hash_size), onde hash_size é assumido sempre ser uma potência de 2. Quando a taxa de ocupação ultrapassa MAX_LOAD, dobramos o tamanho da tabela (doubling); quando cai abaixo de MIN_LOAD, dividimos o tamanho pela metade (halving), ambos os procedimentos são feitos através do rehash. Entradas com um mesmo hash são encadeadas em um mesmo bucket.
 
+```c
+typedef struct {
+    Bucket *buckets;          // "Tabela" (array) do hashing, é nele onde as entradas são armazenadas;
+    uint32_t hash_size;       // Tamanho atual da tabela, m;
+    uint32_t values_quantity; // Quantidade total de entradas (buckets) na tabela, n;
+    uint8_t w;                // Número de bits adotados pelo modelo palavra RAM da estrutura.                
+} ExtensibleHash;
+```
+
+Funções disponíveis ao usuário do módulo:
+
+| Função                | Assinatura                                                                 | Arquivo               | Descrição                                                                                                                            |
+|-----------------------|----------------------------------------------------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `eh_create`           | `ExtensibleHash *eh_create(uint8_t w)`                                     | `extensible_hash.c`   | Cria e inicializa os campos de um EH vazio.                                                                                          |
+| `eh_search`           | `struct VanEmdeBoas *eh_search(ExtensibleHash *hash, uint32_t key)`        | `extensible_hash.c`   | Busca pela estrutura vEB associada a chave de pesquisa key. Retornado o ponteiro da estrutura, caso presente. NULL caso o contrário. |
+| `eh_insert`           | `struct VanEmdeBoas *eh_insert(ExtensibleHash *hash, uint32_t key)`        | `extensible_hash.c`   | Insere uma nova estrutura vEB associada ao valor key (cluster) e retorna o ponteiro associado.                                       |
+| `eh_remove`           | `void eh_remove(ExtensibleHash *hash, uint32_t key)`                       | `extensible_hash.c`   | Remoção da entrada associada à chave key da tabela de dispersão                                                                      |
+| `eh_print`            | `void eh_print(ExtensibleHash *hash)`                                      | `extensible_hash.c`   | Imprime a tabela de dispersão a partir de suas entradas não vazias associadas à cada bucket.                                         |
+| `eh_destroy`          | `void eh_destroy(ExtensibleHash *hash)`                                    | `extensible_hash.c`   | Imprime o menor valor salvo pela estrutura juntamente com os clusters não-vazios.                                                    |
+| `veb_destroy`         | `void veb_destroy(VanEmdeBoas *vEB)`                                       | `extensible_hash.c`   | Libera a memória dos elementos utilizados pela estrutura.                                                                            |
+
+Funções auxiliares (`static`, não são expostas no header!) criadas com o intuito de simplificar os algoritmos principais e propiciar maior facilidade de manuntenção do projeto. Em geral, são focadas no gerenciamento das entradas e buckets presentes em um EH:
+
+| Função                | Assinatura                                                                 | Arquivo               | Descrição                                                                                                                            |
+|-----------------------|----------------------------------------------------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `hash_function`       | `static uint32_t hash_function(ExtensibleHash *hash, uint32_t key)`        | `extensible_hash.c`   | Função de dispersão adotada nos cálculos de hash.                                                                                    |
+| `bucket_find_index`   | `static int bucket_find_index(Bucket *bucket, uint32_t key)`               | `extensible_hash.c`   | Busca pelo valor ao longo de um bucket. Retorna -1 se não encontrado.                                                                |
+| `bucket_push`         | `static void bucket_push(Bucket *bucket, HashEntry entry)`                 | `extensible_hash.c`   | Insere uma nova entrada ao final do bucket.                                                                                          |
+| `bucket_remove_at`    | `static void bucket_remove_at(Bucket *bucket, uint32_t idx)`               | `extensible_hash.c`   | Remoção da entrada associada ao índice idx no bucket.                                                                                |
+| `rehash`              | `static void rehash(ExtensibleHash *hash, uint32_t new_size)`              | `extensible_hash.c`   | Redistribui todas as entradas existentes para uma nova tabela de dispersão de tamanho new_size. É chamado após doubling ou halving.  |
+| `eh_destroy`          | `void eh_destroy(ExtensibleHash *hash)`                                    | `extensible_hash.c`   | Imprime o menor valor salvo pela estrutura juntamente com os clusters não-vazios.                                                    |
+| `veb_destroy`         | `void veb_destroy(VanEmdeBoas *vEB)`                                       | `extensible_hash.c`   | Libera a memória dos elementos utilizados pela estrutura.                                                                            |
+| `check_load`          | `static void check_load(ExtensibleHash *hash)`                             | `extensible_hash.c`   | Verifica a taxa de ocupação da tabela hash e aplica o rehashing caso seja necessário.                                                |
+
+---
 
 ### `main.c`
 
@@ -184,19 +234,89 @@ Ponto de entrada do programa. Responsável por realizar a leitura do arquivo de 
 Dado o arquivo `input\input_vEB.txt`, a qual contém as operações sobre a vEB:
 
 ```text
-INC 655364
-INC 65535
-SUC 100000
+INC 10
+INC 20
+INC 5
+SUC 4
+SUC 5
+PRE 21
+PRE 5
+INC 100
+INC 65536
+INC 65540
 IMP
+SUC 20
+SUC 100
+PRE 65536
+REM 10
+REM 5
+IMP
+SUC 20
+PRE 100
+INC 131072
+INC 131073
+IMP
+REM 65536
+REM 65540
+IMP
+SUC 100
+PRE 131072
+REM 20
+IMP
+REM 131072
+REM 131073
+IMP
+REM 100
+IMP
+SUC 0
+PRE 10
 ```
 
 Temos como saída esperada:
 
 ```text
-SUC 100000
-655364
+SUC 4
+5
+SUC 5
+10
+PRE 21
+20
+PRE 5
+-INF
 IMP
-Min: 65535, C[10]: 4
+Min: 5, C[0]: 10, 20, 100, C[1]: 0, 4
+SUC 20
+100
+SUC 100
+65536
+PRE 65536
+100
+IMP
+Min: 20, C[0]: 100, C[1]: 0, 4
+SUC 20
+100
+PRE 100
+20
+IMP
+Min: 20, C[0]: 100, C[1]: 0, 4, C[2]: 0, 1
+IMP
+Min: 20, C[0]: 100, C[2]: 0, 1
+SUC 100
+131072
+PRE 131072
+100
+IMP
+Min: 100, C[2]: 0, 1
+IMP
+Min: 100
+IMP
+
+SUC 0
++INF
+PRE 10
+-INF
 ```
 
 > A chave utilizada para salvar os clusters pode diferir com base na função de hashing utilizada!
+
+> O uso do comando "IMP" pode retornar valores diferentes a depender do printf() ativo na impressão recursiva
